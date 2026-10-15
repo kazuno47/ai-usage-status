@@ -1,0 +1,9 @@
+node_modules/
+dist/
+*.vsix
+.host-test/
+
+.DS_Store
+.env
+.env.*
+*.log
