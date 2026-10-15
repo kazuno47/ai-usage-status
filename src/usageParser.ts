@@ -22,24 +22,38 @@ export function parseUsage(json: string): ProviderUsage[] {
     })),
   }));
 }
-export interface ProviderDefinition { id: string; name: string; shortName: string; quotas: { short: string; matches: (w: UsageWindow) => boolean }[] }
+export interface QuotaDefinition {
+  short: string;
+  name: string;
+  matches: (w: UsageWindow) => boolean;
+}
+export interface ProviderDefinition { id: string; name: string; shortName: string; quotas: QuotaDefinition[] }
 const standard = [
-  { short: 'S', matches: (w: UsageWindow) => w.kind === 'session' || /^session$/i.test(w.label) },
-  { short: 'W', matches: (w: UsageWindow) => w.kind === 'weekly' || /^weekly$/i.test(w.label) },
+  { short: 'S', name: 'Session', matches: (w: UsageWindow) => w.kind === 'session' || /^session$/i.test(w.label) },
+  { short: 'W', name: 'Weekly', matches: (w: UsageWindow) => w.kind === 'weekly' || /^weekly$/i.test(w.label) },
 ];
 export const PROVIDERS: ProviderDefinition[] = [
   { id: 'codex', name: 'Codex', shortName: 'Codex', quotas: standard },
   { id: 'claude', name: 'Claude', shortName: 'Claude', quotas: standard },
   { id: 'antigravity', name: 'Antigravity', shortName: 'AG', quotas: [
-    { short: 'G', matches: w => /gemini.*weekly/.test(w.kind) || /gemini.*weekly/i.test(w.label) },
-    { short: '3P', matches: w => /3p.*weekly/.test(w.kind) || /claude.*gpt.*weekly/i.test(w.label) },
+    { short: 'G', name: 'Gemini Weekly', matches: w => /gemini.*weekly/.test(w.kind) || /gemini.*weekly/i.test(w.label) },
+    { short: '3P', name: 'Claude/GPT Weekly', matches: w => /3p.*weekly/.test(w.kind) || /claude.*gpt.*weekly/i.test(w.label) },
   ] },
 ];
+export interface QuotaValue { short: string; name: string; remainingPercent?: number }
+export function quotaValues(def: ProviderDefinition, provider?: ProviderUsage): QuotaValue[] {
+  return def.quotas.map(quota => {
+    const matches = provider?.windows.filter(quota.matches) ?? [];
+    return {
+      short: quota.short,
+      name: quota.name,
+      remainingPercent: !provider?.failed && matches.length === 1 ? matches[0].remainingPercent : undefined,
+    };
+  });
+}
 export function statusText(def: ProviderDefinition, provider?: ProviderUsage): string {
-  return `${def.shortName} ${def.quotas.map(q => {
-    const matches = provider?.windows.filter(q.matches) ?? [];
-    const value = !provider?.failed && matches.length === 1 ? matches[0].remainingPercent : undefined;
-    return `${q.short}${value === undefined ? '--' : Math.round(value)}`;
+  return `${def.shortName} ${quotaValues(def, provider).map(quota => {
+    return `${quota.short}${quota.remainingPercent === undefined ? '--' : Math.round(quota.remainingPercent)}`;
   }).join(' ')}`;
 }
 export function formatReset(resetAt?: string): string {

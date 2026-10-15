@@ -1,7 +1,7 @@
 {
   "name": "ai-usage-status",
   "displayName": "AI Usage Status",
-  "description": "Local CodexBar quota windows in the status bar.",
+  "description": "Local CodexBar quota windows in the Explorer and the status bar.",
   "version": "0.1.0",
   "publisher": "local",
   "private": true,
@@ -19,6 +19,14 @@
     "ui"
   ],
   "contributes": {
+    "views": {
+      "explorer": [
+        {
+          "id": "aiUsageStatus.usageView",
+          "name": "AI Usage"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "aiUsageStatus.details",
