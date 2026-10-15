@@ -1,6 +1,6 @@
-# AI Usage Status v0.1
+# AI Usage Status
 
-Cursor / VS CodeのStatus BarにCodex・Claude・Antigravityの各quota残量を表示します。
+Cursor / VS CodeのExplorer ViewとStatus BarにCodex・Claude・Antigravityの各quota残量を表示します。
 Usageの取得元はローカルの `codexbar dashboard --identity redacted` のJSON出力のみです。
 拡張自身はHTTP server、外部API、認証情報へアクセスしません。実行時の追加npm依存はありません。
 
@@ -9,10 +9,23 @@ CodexBar CLIは別途インストール・設定が必要です。`codexbar dash
 
 ## 表示
 
+Explorerサイドバーの `AI Usage` Viewを展開すると、ウィンドウ幅に左右されず主要quotaを確認できます。
+
+```text
+Codex        S 92%   W 80%
+Claude       S 44%   W 46%
+Antigravity  G 0%    3P 0%
+```
+
+Provider行をクリックすると、そのProviderの全windowのlabel・remaining・used・ローカル日時のresetをQuickPickに表示します。
+略称の正式名称はProvider行のTooltipでも確認できます。
+
+Status Barにも補助表示として次の形式で表示します。
+
 `Codex S92 W80`　`Claude S44 W46`　`AG G0 3P0`
 
 数値は残量のパーセント（Status Barでは整数に丸めます）。S = Session、W = Weekly、G = Gemini Weekly、3P = Claude/GPT Weeklyです。
-各Providerをクリックすると全windowのlabel・remaining・used・ローカル日時のresetをQuickPickに表示します。
+各Status Bar Itemをクリックしても同じ詳細を表示します。
 コマンドパレットの `AI Usage: Show Details` では3 Providerの詳細をまとめて確認できます。
 
 起動時に1回取得し、60秒ごとに更新します。45秒でタイムアウトし、実行中の重複取得は行いません。
@@ -34,7 +47,7 @@ npm test
 ```
 
 このフォルダをCursor / VS Codeで開き、F5で `Run AI Usage Status` を起動します。
-Extension Development HostのStatus Barに3項目が表示されます。
+Extension Development HostのExplorerで `AI Usage` を展開すると3 Providerが表示されます。
 常用インストールする場合は `npx @vscode/vsce package` でVSIXを作り、Extensionsの `Install from VSIX...` でインストールできます。
 
 ## 構成
@@ -42,6 +55,7 @@ Extension Development HostのStatus Barに3項目が表示されます。
 - `src/codexBarClient.ts`: shellを介さないone-shot CLI実行・エラー処理
 - `src/usageParser.ts`: 最小フィールドの抽出、Provider/quota定義、表示整形
 - `src/statusBarController.ts`: Status BarとQuickPick
+- `src/usageViewProvider.ts`: 専用AI Usage Tree View
 - `src/extension.ts`: ライフサイクル・60秒更新・破棄
 - `test/*.test.cjs`: 解析・CLI境界・起動時取得・60秒更新・重複抑止・復旧・破棄のテスト
 
@@ -54,7 +68,7 @@ Extension Development HostのStatus Barに3項目が表示されます。
 2026-10-15、CursorのF5によるExtension Development Hostで、実CodexBar JSONを使った表示を確認しました。
 
 - Codex: Session/Weeklyの残量・使用率とローカルReset日時
-- Claude: Session/Weeklyの残量・使用率、欠損Resetは `--`
+- Claude: Session/Weeklyの残量・使用率とローカルReset日時
 - Antigravity: Gemini/Claude・GPTそれぞれの残量・使用率（残量0%を含む）
 - install / build / lint / typecheck / 単体テスト6件が成功
 

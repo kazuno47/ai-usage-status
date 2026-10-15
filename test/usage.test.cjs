@@ -1,9 +1,12 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { parseUsage, statusText, PROVIDERS, formatReset } = require('../dist/usageParser');
+const { parseUsage, statusText, quotaValues, PROVIDERS, formatReset } = require('../dist/usageParser');
 test('six quotas remain independent, zero survives, identity is discarded', () => {
   const providers = parseUsage(JSON.stringify({ providers: PROVIDERS.map((p, i) => ({ id: p.id, identity: { accountEmail: 'private@example.com' }, error: null, windows: (i < 2 ? ['session', 'weekly'] : ['antigravity-quota-summary-gemini-weekly', 'antigravity-quota-summary-3p-weekly']).map((kind, j) => ({ kind, label: kind, remainingPercent: i === 2 ? 0 : 92-j*12, usedPercent: i === 2 ? 100 : 8+j*12 })) })) }));
   assert.deepEqual(PROVIDERS.map((p,i) => statusText(p, providers[i])), ['Codex S92 W80', 'Claude S92 W80', 'AG G0 3P0']);
+  assert.deepEqual(quotaValues(PROVIDERS[2], providers[2]).map(value => [value.name, value.remainingPercent]), [
+    ['Gemini Weekly', 0], ['Claude/GPT Weekly', 0],
+  ]);
   assert.ok(!JSON.stringify(providers).includes('private'));
 });
 test('provider failures and missing providers do not affect healthy providers', () => {

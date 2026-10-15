@@ -3,6 +3,6 @@ src/**
 test/**
 .vscode/**
 .host-test/**
-*.map
+dist/**/*.map
 tsconfig.json
 eslint.config.mjs
