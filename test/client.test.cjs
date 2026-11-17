@@ -24,3 +24,27 @@ test('CLI arguments, missing binary, bad JSON and partial nonzero results', asyn
     await assert.rejects(client.fetch(), e => e.kind === 'execution');
   } finally { childProcess.execFile = original; }
 });
+test('a CLI that never exits fails at the deadline, is force-stopped, and does not block the next fetch', async () => {
+  const original = childProcess.execFile;
+  const signals = [];
+  let lateCallback, respond = false;
+  childProcess.execFile = (_command, _args, options, callback) => {
+    assert.equal(options.timeout, 20);
+    if (respond) queueMicrotask(() => callback(null, '{"providers":[{"id":"codex","error":null,"windows":[]}]}'));
+    else lateCallback = callback; // Never called before the deadline: the process ignores SIGTERM.
+    return { kill(signal) { signals.push(signal); return true; } };
+  };
+  try {
+    const client = new CodexBarClient(20, 10);
+    await assert.rejects(client.fetch(), e => e.kind === 'execution');
+    assert.deepEqual(signals, ['SIGTERM']);
+    await new Promise(resolve => setTimeout(resolve, 60));
+    assert.deepEqual(signals, ['SIGTERM', 'SIGKILL']);
+    respond = true;
+    const next = client.fetch();
+    lateCallback({killed:true}, ''); // The old process finally exits: its callback must not touch the new fetch.
+    assert.equal((await next)[0].id, 'codex');
+    client.dispose();
+    assert.deepEqual(signals, ['SIGTERM', 'SIGKILL'], 'nothing is left to stop after a completed fetch');
+  } finally { childProcess.execFile = original; }
+});
