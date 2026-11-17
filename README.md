@@ -57,7 +57,7 @@ Extension Development HostのExplorerで `AI Usage` を展開すると3 Provider
 - `src/statusBarController.ts`: Status BarとQuickPick
 - `src/usageViewProvider.ts`: 専用AI Usage Tree View
 - `src/extension.ts`: ライフサイクル・60秒更新・破棄
-- `test/*.test.cjs`: 解析・CLI境界・起動時取得・60秒更新・重複抑止・復旧・破棄のテスト
+- `test/*.test.cjs`: 解析・CLI境界・起動時取得・60秒更新・重複抑止・復旧・破棄・詳細表示のテスト
 
 将来のProvider追加は `PROVIDERS` の定義に追加します。未知のwindowも詳細には残します。
 主要quotaはkindと限定的なlabelの識別規則で判定します。
